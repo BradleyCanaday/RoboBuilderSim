@@ -1,0 +1,10 @@
+{
+    "name": "Robot",
+    "output_type": "robot",
+    "allowed_input_ports": {
+        "chassis": 1,
+        "motor": 4,
+        "wheel": 4,
+        "computer": 1
+    }
+}

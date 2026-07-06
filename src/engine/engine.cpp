@@ -10,8 +10,16 @@
 
 #include <nlohmann/json.hpp>
 
-RobotBuilderEngine::RobotBuilderEngine(int num_iron_mines, int num_coal_mines, int num_copper_mines, int num_steel_factories, int num_wire_factories, int num_motor_factories)
-: sim_barrier_(num_iron_mines+num_coal_mines+num_copper_mines+num_steel_factories+num_wire_factories+num_motor_factories+1),
+RobotBuilderEngine::RobotBuilderEngine(int num_iron_mines, int num_coal_mines, int num_copper_mines, 
+                           int num_silicon_mines, int num_rubber_farms, int num_steel_factories, 
+                           int num_wire_factories, int num_wheel_factories, int num_microcontroller_factories,
+                           int num_motor_factories, int num_chassis_factories, int num_computer_factories, 
+                           int num_robot_factories)
+: sim_barrier_(num_iron_mines+num_coal_mines+num_copper_mines+ 
+               num_silicon_mines+num_rubber_farms+num_steel_factories+ 
+               num_wire_factories+num_wheel_factories+num_microcontroller_factories+
+               num_motor_factories+num_chassis_factories+num_computer_factories+ 
+               num_robot_factories+1),
   is_running_(true)
 {
     LoadResources("data/resources");
@@ -20,10 +28,19 @@ RobotBuilderEngine::RobotBuilderEngine(int num_iron_mines, int num_coal_mines, i
     CreateCollectors("iron", num_iron_mines, resource_registry_["iron"].output_per_tick);
     CreateCollectors("coal", num_coal_mines, resource_registry_["coal"].output_per_tick);
     CreateCollectors("copper", num_copper_mines, resource_registry_["copper"].output_per_tick);
+    CreateCollectors("silicon", num_silicon_mines, resource_registry_["silicon"].output_per_tick);
+    CreateCollectors("rubber", num_rubber_farms, resource_registry_["rubber"].output_per_tick);
 
     CreateFactories("Steel", num_steel_factories);
     CreateFactories("Copper Wire", num_wire_factories);
+    CreateFactories("Wheel", num_wheel_factories);
+    CreateFactories("Microcontroller", num_microcontroller_factories);
+
     CreateFactories("Motor", num_motor_factories);
+    CreateFactories("Chassis", num_chassis_factories);
+    CreateFactories("Computer", num_computer_factories);
+
+    CreateFactories("Robot", num_robot_factories);
 }
 
 void RobotBuilderEngine::Run(int ticks)

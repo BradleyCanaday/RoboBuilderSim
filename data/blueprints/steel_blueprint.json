@@ -2,7 +2,7 @@
     "name": "Steel",
     "output_type": "steel",
     "allowed_input_ports": {
-        "iron": 10,
-        "coal": 5
+        "iron": 2,
+        "coal": 1
     }
 }

@@ -42,7 +42,11 @@ class RobotBuilderEngine
         const Silo& SiloFor(const std::string& resource_id) const;
 
     public:
-        RobotBuilderEngine(int num_iron_mines, int num_coal_mines, int num_copper_mines, int num_steel_factories, int num_wire_factories, int num_motor_factories);
+        RobotBuilderEngine(int num_iron_mines, int num_coal_mines, int num_copper_mines, 
+                           int num_silicon_mines, int num_rubber_farms, int num_steel_factories, 
+                           int num_wire_factories, int num_wheel_factories, int num_microcontroller_factories,
+                           int num_motor_factories, int num_chassis_factories, int num_computer_factories, 
+                           int num_robot_factories);
 
         void Run(int num_ticks);
         void Stop();

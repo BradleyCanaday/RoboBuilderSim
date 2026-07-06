@@ -1,0 +1,8 @@
+{
+    "name": "Microcontroller",
+    "output_type": "microcontroller",
+    "allowed_input_ports": {
+        "copper": 2,
+        "silicon": 2
+    }
+}

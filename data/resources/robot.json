@@ -1,0 +1,6 @@
+{
+    "id": "robot",
+    "name": "Robot",
+    "output_per_tick": 1,
+    "tier": 3
+}
