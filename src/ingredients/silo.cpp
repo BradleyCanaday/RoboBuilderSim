@@ -1,7 +1,8 @@
 #include <ingredients/silo.hpp>
 
-Silo::Silo()
+Silo::Silo(std::string resource_id)
 {
+    resource_id_ = resource_id;
     stored_units_ = 0;
 }
 
@@ -27,6 +28,11 @@ int Silo::GetStoredUnits() const
 {
     std::lock_guard<std::mutex> lock(silo_mutex_);
     return stored_units_;
+}
+
+std::string Silo::GetId() const
+{
+    return resource_id_;
 }
 
         
