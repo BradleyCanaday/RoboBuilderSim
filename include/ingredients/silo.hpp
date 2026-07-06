@@ -5,7 +5,7 @@
 class Silo
 {
     private:
-        std::mutex silo_mutex_;
+        mutable std::mutex silo_mutex_;
         int stored_units_;
 
     public:
@@ -13,5 +13,5 @@ class Silo
 
         void AddResources(int resource_units);
         bool TakeResources(int resource_units);
-        int GetStoredUnits();
+        int GetStoredUnits() const;
 };
