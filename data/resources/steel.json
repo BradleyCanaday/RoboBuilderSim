@@ -1,5 +1,6 @@
 {
     "id": "steel",
     "name": "Steel Ingot",
-    "output_per_tick": 1
+    "output_per_tick": 1,
+    "tier": 1
 }

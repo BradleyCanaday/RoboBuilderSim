@@ -1,5 +1,6 @@
 {
     "id": "coal",
     "name": "Coal",
-    "output_per_tick": 5
+    "output_per_tick": 5,
+    "tier": 0
 }

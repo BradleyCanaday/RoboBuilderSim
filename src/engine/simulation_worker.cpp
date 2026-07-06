@@ -20,19 +20,19 @@ void SimulationWorker::Run()
 {
     while (true)
     {
-        barrier_.arrive_and_wait();   // Phase 1
-
-        if (!running_)
+        for (int phase = 0; phase <= max_phases_; ++phase)
         {
             barrier_.arrive_and_wait();
-            barrier_.arrive_and_wait();
+
+            if (!running_) {
+                continue;
+            }
+
+            Step(phase); 
+        }
+
+        if (!running_) {
             break;
         }
-        StepPhase1();
-        barrier_.arrive_and_wait();   // Phase 2
-        
-        StepPhase2();
-        barrier_.arrive_and_wait();   // Phase 3
-        
     }
 }
