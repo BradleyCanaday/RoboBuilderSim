@@ -1,8 +1,9 @@
 #include <engine/simulation_worker.hpp>
 
 SimulationWorker::SimulationWorker(std::barrier<>& barrier,
-                                   std::atomic<bool>& running)
-    : barrier_(barrier), running_(running)
+                                   std::atomic<bool>& running,
+                                   int max_phases)
+    : barrier_(barrier), running_(running), max_phases_(max_phases)
 {}
 
 void SimulationWorker::Start()
@@ -20,19 +21,18 @@ void SimulationWorker::Run()
 {
     while (true)
     {
-        barrier_.arrive_and_wait();   // Phase 1
-
-        if (!running_)
+        for (int phase = 0; phase < max_phases_; ++phase)
         {
             barrier_.arrive_and_wait();
-            barrier_.arrive_and_wait();
+
+            if (running_) {
+                Step(phase); 
+            }
+        }
+
+        if(!running_)
+        {
             break;
         }
-        StepPhase1();
-        barrier_.arrive_and_wait();   // Phase 2
-        
-        StepPhase2();
-        barrier_.arrive_and_wait();   // Phase 3
-        
     }
 }

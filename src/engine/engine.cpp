@@ -10,8 +10,8 @@
 
 #include <nlohmann/json.hpp>
 
-RobotBuilderEngine::RobotBuilderEngine(int num_iron_mines, int num_coal_mines, int num_copper_mines, int num_steel_factories, int num_wire_factories)
-: sim_barrier_(num_iron_mines+num_coal_mines+num_copper_mines+num_steel_factories+num_wire_factories+1),
+RobotBuilderEngine::RobotBuilderEngine(int num_iron_mines, int num_coal_mines, int num_copper_mines, int num_steel_factories, int num_wire_factories, int num_motor_factories)
+: sim_barrier_(num_iron_mines+num_coal_mines+num_copper_mines+num_steel_factories+num_wire_factories+num_motor_factories+1),
   is_running_(true)
 {
     LoadResources("data/resources");
@@ -23,6 +23,7 @@ RobotBuilderEngine::RobotBuilderEngine(int num_iron_mines, int num_coal_mines, i
 
     CreateFactories("Steel", num_steel_factories);
     CreateFactories("Copper Wire", num_wire_factories);
+    CreateFactories("Motor", num_motor_factories);
 }
 
 void RobotBuilderEngine::Run(int ticks)
@@ -58,6 +59,8 @@ void RobotBuilderEngine::AdvanceTick()
     sim_barrier_.arrive_and_wait(); //T0 generation
     sim_barrier_.arrive_and_wait(); //T1 generation
     sim_barrier_.arrive_and_wait(); //T2 generation
+    sim_barrier_.arrive_and_wait(); //T3 generation
+    sim_barrier_.arrive_and_wait(); //T4 generation
 }
 
 void RobotBuilderEngine::LoadResources(const std::string& directory_path)
@@ -74,6 +77,7 @@ void RobotBuilderEngine::LoadResources(const std::string& directory_path)
             resource.id = j["id"];
             resource.name = j["name"];
             resource.output_per_tick = j["output_per_tick"];
+            resource.tier= j["tier"];
 
             resource_registry_[resource.id] = resource;
             silos_[resource.id] = std::make_unique<Silo>(resource.id);
@@ -118,7 +122,8 @@ void RobotBuilderEngine::CreateCollectors(const std::string& resource, int count
             silo,
             sim_barrier_,
             units_per_tick,
-            is_running_));
+            is_running_,
+            5));
 
         collectors_.back()->Start();
     }
@@ -150,7 +155,9 @@ void RobotBuilderEngine::CreateFactories(const std::string& blueprint_name, int 
             SiloFor(bp.output_type),
             sim_barrier_,
             resource_registry_.at(bp.output_type).output_per_tick, // <-- Grab the amount from the registry!
-            is_running_));
+            is_running_,
+            5,
+            resource_registry_.at(bp.output_type).tier));
 
         factories_.back()->Start();
     }

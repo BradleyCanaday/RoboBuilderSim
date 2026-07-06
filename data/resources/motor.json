@@ -1,0 +1,6 @@
+{
+    "id": "motor",
+    "name": "Motor",
+    "output_per_tick": 1,
+    "tier": 2
+}

@@ -1,5 +1,6 @@
 {
     "id": "copper",
     "name": "Copper Ore",
-    "output_per_tick": 10
+    "output_per_tick": 10,
+    "tier": 0
 }
