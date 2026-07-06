@@ -20,13 +20,13 @@ void ResourceCollector::Run()
         if (!is_running_)
         {
             sim_barrier_.arrive_and_wait();
+            sim_barrier_.arrive_and_wait();
             break;
         }
         output_silo_.AddResources(production_rate_);
 
         sim_barrier_.arrive_and_wait();
-
-        
+        sim_barrier_.arrive_and_wait();
     }
 }
 

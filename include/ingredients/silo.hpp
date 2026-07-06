@@ -12,6 +12,6 @@ class Silo
         Silo();
 
         void AddResources(int resource_units);
-        void TakeResources(int resource_units);
+        bool TakeResources(int resource_units);
         int GetStoredUnits();
 };
