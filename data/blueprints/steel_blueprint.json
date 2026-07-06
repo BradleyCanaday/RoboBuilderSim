@@ -1,0 +1,8 @@
+{
+    "name": "Steel",
+    "output_type": "steel",
+    "allowed_input_ports": {
+        "iron": 10,
+        "coal": 5
+    }
+}
