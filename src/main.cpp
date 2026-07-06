@@ -3,14 +3,11 @@
 
 int main()
 {
-    RobotBuilderEngine* engine = new RobotBuilderEngine();
+    RobotBuilderEngine engine(3);
 
-    int i=0;
-    while(i<10)
-    {
-        engine->Loop();
-        i++;
-    }
+    engine.Run(10);
+    engine.Stop();
+    engine.Join();
 
     std::cout << '\n';
 
