@@ -1,0 +1,8 @@
+{
+    "name": "Motor",
+    "output_type": "motor",
+    "allowed_input_ports": {
+        "wire": 2,
+        "steel": 1
+    }
+}
