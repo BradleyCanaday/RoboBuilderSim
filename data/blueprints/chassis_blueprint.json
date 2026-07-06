@@ -1,0 +1,7 @@
+{
+    "name": "Chassis",
+    "output_type": "chassis",
+    "allowed_input_ports": {
+        "steel": 2
+    }
+}

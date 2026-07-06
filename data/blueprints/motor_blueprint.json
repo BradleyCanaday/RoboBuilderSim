@@ -2,7 +2,8 @@
     "name": "Motor",
     "output_type": "motor",
     "allowed_input_ports": {
-        "wire": 2,
+        "wire": 1,
+        "microcontroller": 1,
         "steel": 1
     }
 }

@@ -1,0 +1,7 @@
+{
+    "name": "Wheel",
+    "output_type": "wheel",
+    "allowed_input_ports": {
+        "rubber": 2
+    }
+}
