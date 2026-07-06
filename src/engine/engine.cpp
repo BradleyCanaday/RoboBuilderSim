@@ -4,21 +4,29 @@
 #include <thread>
 #include <chrono>
 
-RobotBuilderEngine::RobotBuilderEngine(int num_iron_mines, int num_coal_mines, int num_steel_factories)
-: sim_barrier_(num_iron_mines+num_coal_mines+num_steel_factories+1),
+RobotBuilderEngine::RobotBuilderEngine(int num_iron_mines, int num_coal_mines, int num_copper_mines, int num_steel_factories, int num_wire_factories)
+: sim_barrier_(num_iron_mines+num_coal_mines+num_copper_mines+num_steel_factories+num_wire_factories+1),
   is_running_(true)
 {
+    GenerateBlueprints();
+
     CreateCollectors(
         Resource::Iron,
         num_iron_mines,
-        GetResourceInfo(Resource::Iron).collector_output_per_tick);
+        GetResourceInfo(Resource::Iron).output_per_tick);
 
     CreateCollectors(
         Resource::Coal,
         num_coal_mines,
-        GetResourceInfo(Resource::Coal).collector_output_per_tick);
+        GetResourceInfo(Resource::Coal).output_per_tick);
 
-    CreateSteelFactories(num_steel_factories);
+    CreateCollectors(
+        Resource::Copper,
+        num_copper_mines,
+        GetResourceInfo(Resource::Copper).output_per_tick);
+
+    CreateFactories("Steel", num_steel_factories);
+    CreateFactories("Wire", num_wire_factories);
 }
 
 void RobotBuilderEngine::Run(int ticks)
@@ -46,8 +54,10 @@ void RobotBuilderEngine::Join()
             collector->Join();
     }
 
-    for (auto& factory : steel_factories_)
+    for (auto& factory : factories_)
+    {
         factory->Join();
+    }
 }
 
 void RobotBuilderEngine::AdvanceTick()
@@ -77,30 +87,55 @@ void RobotBuilderEngine::CreateCollectors(
     }
 }
 
-void RobotBuilderEngine::CreateSteelFactories(int count)
+void RobotBuilderEngine::CreateFactories(const std::string& blueprint_name, int count)
 {
-    const std::vector<Silo*> inputs{
-        &SiloFor(Resource::Iron),
-        &SiloFor(Resource::Coal)
-    };
+    // Safety check just in case you mistype a blueprint name later
+    if (blueprints_.find(blueprint_name) == blueprints_.end()) {
+        std::cerr << "Error: Blueprint '" << blueprint_name << "' not found!\n";
+        return; 
+    }
 
-    const std::vector<int> volumes{
-        GetResourceInfo(Resource::Iron).collector_output_per_tick,
-        GetResourceInfo(Resource::Coal).collector_output_per_tick
-    };
+    const Blueprint& bp = blueprints_[blueprint_name];
+
+    std::vector<Silo*> inputs;
+    std::vector<int> volumes;
+
+    for (const auto& [resource_type, amount_needed] : bp.allowed_input_ports)
+    {
+        inputs.push_back(&SiloFor(resource_type));
+        volumes.push_back(amount_needed);
+    }
 
     for (int i = 0; i < count; ++i)
     {
-        steel_factories_.push_back(std::make_unique<Factory>(
+        factories_.push_back(std::make_unique<Factory>(
             inputs,
             volumes,
-            SiloFor(Resource::Steel),
+            SiloFor(bp.output_type),
             sim_barrier_,
-            1,
+            bp.output_amount,
             is_running_));
 
-        steel_factories_.back()->Start();
+        factories_.back()->Start();
     }
+}
+
+void RobotBuilderEngine::GenerateBlueprints()
+{
+    Blueprint steel_blueprint;
+    steel_blueprint.name = "Steel";
+    steel_blueprint.allowed_input_ports[Resource::Iron] = 10; 
+    steel_blueprint.allowed_input_ports[Resource::Coal] = 5; 
+    steel_blueprint.output_type = Resource::Steel;
+    steel_blueprint.output_amount = GetResourceInfo(Resource::Steel).output_per_tick;
+    blueprints_[steel_blueprint.name] = steel_blueprint;
+
+    Blueprint wire_blueprint;
+    wire_blueprint.name = "Wire";
+    wire_blueprint.allowed_input_ports[Resource::Copper] = 2; 
+    wire_blueprint.output_type = Resource::Wire;
+    wire_blueprint.output_amount = GetResourceInfo(Resource::Wire).output_per_tick;
+    blueprints_[wire_blueprint.name] = wire_blueprint;
 }
 
 void RobotBuilderEngine::PrintResources() const
@@ -113,8 +148,14 @@ void RobotBuilderEngine::PrintResources() const
         << GetResourceInfo(Resource::Coal).name << ": "
         << SiloFor(Resource::Coal).GetStoredUnits()
         << " "
+        << GetResourceInfo(Resource::Copper).name << ": "
+        << SiloFor(Resource::Copper).GetStoredUnits()
+        << " "
         << GetResourceInfo(Resource::Steel).name << ": "
         << SiloFor(Resource::Steel).GetStoredUnits()
+        << " "
+        << GetResourceInfo(Resource::Wire).name << ": "
+        << SiloFor(Resource::Wire).GetStoredUnits()
         << std::flush;
 }
 

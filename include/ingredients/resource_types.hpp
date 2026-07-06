@@ -7,7 +7,9 @@ enum class Resource
 {
     Iron,
     Coal,
+    Copper,
     Steel,
+    Wire,
 
     Count
 };
@@ -20,13 +22,15 @@ constexpr std::size_t ToIndex(Resource resource)
 struct ResourceInfo
 {
     std::string_view name;
-    int collector_output_per_tick;
+    int output_per_tick;
 };
 
 inline constexpr std::array<ResourceInfo, ToIndex(Resource::Count)> resource_info{{
     {"Iron", 10},
     {"Coal", 5},
+    {"Copper", 10},
     {"Steel", 1},
+    {"Wire", 1},
 }};
 
 constexpr const ResourceInfo& GetResourceInfo(Resource resource)
