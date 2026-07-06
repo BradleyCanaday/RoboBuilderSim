@@ -1,0 +1,7 @@
+{
+    "name": "Copper Wire",
+    "output_type": "wire",
+    "allowed_input_ports": {
+        "copper": 2
+    }
+}

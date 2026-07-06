@@ -1,0 +1,6 @@
+{
+    "id": "wire",
+    "name": "Copper Wire",
+    "output_per_tick": 1,
+    "tier": 1
+}

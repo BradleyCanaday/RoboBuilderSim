@@ -1,0 +1,6 @@
+{
+    "id": "iron",
+    "name": "Iron Ore",
+    "output_per_tick": 10,
+    "tier": 0
+}
