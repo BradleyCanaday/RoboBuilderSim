@@ -3,7 +3,11 @@
 
 int main()
 {
-    RobotBuilderEngine engine(1,1,1,1,5,1);
+    RobotBuilderEngine engine(5,5,5,
+                              5,5,7,
+                              5,4,12,
+                              4,1,1,
+                              1);
 
     engine.Run(10);
     engine.Stop();
