@@ -10,10 +10,18 @@ void Silo::AddResources(int resource_units)
     std::lock_guard<std::mutex> lock(silo_mutex_);
     stored_units_+=resource_units;
 }
-void Silo::TakeResources(int resource_units)
+bool Silo::TakeResources(int resource_units)
 {
     std::lock_guard<std::mutex> lock(silo_mutex_);
-    stored_units_-=resource_units;
+    if(stored_units_-resource_units >= 0)
+    {
+        stored_units_=stored_units_-resource_units;
+        return true;
+    }
+    else
+    {
+        return false;
+    }
 }
 int Silo::GetStoredUnits()
 {
