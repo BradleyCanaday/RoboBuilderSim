@@ -2,8 +2,11 @@
 
 #include <barrier>
 #include <map>
+#include <unordered_map>
 #include <string>
 #include <vector>
+#include <memory>
+#include <atomic>
 
 #include <blueprints/blueprint.hpp>
 #include <factories/factory.hpp>
@@ -14,30 +17,29 @@
 class RobotBuilderEngine
 {
     private:
-        std::array<Silo, ToIndex(Resource::Count)> silos_;
-
-        std::array<
-            std::vector<std::unique_ptr<ResourceCollector>>,
-            ToIndex(Resource::Count)
-        > collectors_;
-
-        std::vector<std::unique_ptr<Factory>> factories_;
-
+        std::unordered_map<std::string, Resource> resource_registry_;
         std::map<std::string, Blueprint> blueprints_;
 
+        std::unordered_map<std::string, std::unique_ptr<Silo>> silos_;
+
+        std::vector<std::unique_ptr<ResourceCollector>> collectors_;
+        std::vector<std::unique_ptr<Factory>> factories_;
+
         std::barrier<> sim_barrier_;
-        std::atomic<bool> is_running_ ;
+        std::atomic<bool> is_running_;
 
         void AdvanceTick();
 
-        void GenerateBlueprints();
-        void CreateCollectors(Resource resource, int count, int units_per_tick);
+        void LoadResources(const std::string& directory_path);
+        void LoadBlueprints(const std::string& directory_path);
+
+        void CreateCollectors(const std::string& resource_id, int count, int units_per_tick);
         void CreateFactories(const std::string& blueprint_name, int count);
 
         void PrintResources() const;
 
-        Silo& SiloFor(Resource resource);
-        const Silo& SiloFor(Resource resource) const;
+        Silo& SiloFor(const std::string& resource_id);
+        const Silo& SiloFor(const std::string& resource_id) const;
 
     public:
         RobotBuilderEngine(int num_iron_mines, int num_coal_mines, int num_copper_mines, int num_steel_factories, int num_wire_factories);

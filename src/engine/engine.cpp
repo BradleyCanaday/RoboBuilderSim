@@ -1,32 +1,28 @@
 #include <engine/engine.hpp>
 
+#include <algorithm>
+#include <chrono>
+#include <fstream>
+#include <filesystem>
 #include <iostream>
 #include <thread>
-#include <chrono>
+
+
+#include <nlohmann/json.hpp>
 
 RobotBuilderEngine::RobotBuilderEngine(int num_iron_mines, int num_coal_mines, int num_copper_mines, int num_steel_factories, int num_wire_factories)
 : sim_barrier_(num_iron_mines+num_coal_mines+num_copper_mines+num_steel_factories+num_wire_factories+1),
   is_running_(true)
 {
-    GenerateBlueprints();
+    LoadResources("data/resources");
+    LoadBlueprints("data/blueprints");
 
-    CreateCollectors(
-        Resource::Iron,
-        num_iron_mines,
-        GetResourceInfo(Resource::Iron).output_per_tick);
-
-    CreateCollectors(
-        Resource::Coal,
-        num_coal_mines,
-        GetResourceInfo(Resource::Coal).output_per_tick);
-
-    CreateCollectors(
-        Resource::Copper,
-        num_copper_mines,
-        GetResourceInfo(Resource::Copper).output_per_tick);
+    CreateCollectors("iron", num_iron_mines, resource_registry_["iron"].output_per_tick);
+    CreateCollectors("coal", num_coal_mines, resource_registry_["coal"].output_per_tick);
+    CreateCollectors("copper", num_copper_mines, resource_registry_["copper"].output_per_tick);
 
     CreateFactories("Steel", num_steel_factories);
-    CreateFactories("Wire", num_wire_factories);
+    CreateFactories("Copper Wire", num_wire_factories);
 }
 
 void RobotBuilderEngine::Run(int ticks)
@@ -48,14 +44,11 @@ void RobotBuilderEngine::Stop()
 
 void RobotBuilderEngine::Join()
 {
-    for (auto& collector_list : collectors_)
-    {
-        for (auto& collector : collector_list)
-            collector->Join();
+    for (auto& collector : collectors_) {
+        collector->Join();
     }
 
-    for (auto& factory : factories_)
-    {
+    for (auto& factory : factories_) {
         factory->Join();
     }
 }
@@ -67,29 +60,72 @@ void RobotBuilderEngine::AdvanceTick()
     sim_barrier_.arrive_and_wait(); //T2 generation
 }
 
-void RobotBuilderEngine::CreateCollectors(
-    Resource resource,
-    int count,
-    int units_per_tick)
+void RobotBuilderEngine::LoadResources(const std::string& directory_path)
 {
-    auto& collectors = collectors_[ToIndex(resource)];
+    for (const auto& entry : std::filesystem::directory_iterator(directory_path))
+    {
+        if (entry.path().extension() == ".json")
+        {
+            std::ifstream file(entry.path());
+            nlohmann::json j;
+            file >> j;
+
+            Resource resource;
+            resource.id = j["id"];
+            resource.name = j["name"];
+            resource.output_per_tick = j["output_per_tick"];
+
+            resource_registry_[resource.id] = resource;
+            silos_[resource.id] = std::make_unique<Silo>(resource.id);
+        }
+    }
+    std::cout << "Loaded " << resource_registry_.size() << " resources.\n";
+}
+
+void RobotBuilderEngine::LoadBlueprints(const std::string& directory_path)
+{
+    for (const auto& entry : std::filesystem::directory_iterator(directory_path))
+    {
+        if (entry.path().extension() == ".json")
+        {
+            std::ifstream file(entry.path());
+            nlohmann::json j;
+            file >> j;
+
+            Blueprint bp;
+            bp.name = j["name"];
+            bp.output_type = j["output_type"];
+
+            for (auto& [input_id, amount] : j["allowed_input_ports"].items()) 
+            {
+                bp.allowed_input_ports[input_id] = amount.get<int>();
+            }
+
+            blueprints_[bp.name] = bp;
+        }
+    }
+    std::cout << "Loaded " << blueprints_.size() << " blueprints.\n";
+}
+
+void RobotBuilderEngine::CreateCollectors(const std::string& resource, int count, int units_per_tick)
+{
     auto& silo = SiloFor(resource);
 
     for (int i = 0; i < count; ++i)
     {
-        collectors.push_back(std::make_unique<ResourceCollector>(
+        // Just push directly into the single collectors_ vector
+        collectors_.push_back(std::make_unique<ResourceCollector>(
             silo,
             sim_barrier_,
             units_per_tick,
             is_running_));
 
-        collectors.back()->Start();
+        collectors_.back()->Start();
     }
 }
 
 void RobotBuilderEngine::CreateFactories(const std::string& blueprint_name, int count)
 {
-    // Safety check just in case you mistype a blueprint name later
     if (blueprints_.find(blueprint_name) == blueprints_.end()) {
         std::cerr << "Error: Blueprint '" << blueprint_name << "' not found!\n";
         return; 
@@ -113,58 +149,39 @@ void RobotBuilderEngine::CreateFactories(const std::string& blueprint_name, int 
             volumes,
             SiloFor(bp.output_type),
             sim_barrier_,
-            bp.output_amount,
+            resource_registry_.at(bp.output_type).output_per_tick, // <-- Grab the amount from the registry!
             is_running_));
 
         factories_.back()->Start();
     }
 }
 
-void RobotBuilderEngine::GenerateBlueprints()
-{
-    Blueprint steel_blueprint;
-    steel_blueprint.name = "Steel";
-    steel_blueprint.allowed_input_ports[Resource::Iron] = 10; 
-    steel_blueprint.allowed_input_ports[Resource::Coal] = 5; 
-    steel_blueprint.output_type = Resource::Steel;
-    steel_blueprint.output_amount = GetResourceInfo(Resource::Steel).output_per_tick;
-    blueprints_[steel_blueprint.name] = steel_blueprint;
-
-    Blueprint wire_blueprint;
-    wire_blueprint.name = "Wire";
-    wire_blueprint.allowed_input_ports[Resource::Copper] = 2; 
-    wire_blueprint.output_type = Resource::Wire;
-    wire_blueprint.output_amount = GetResourceInfo(Resource::Wire).output_per_tick;
-    blueprints_[wire_blueprint.name] = wire_blueprint;
-}
-
 void RobotBuilderEngine::PrintResources() const
 {
-    std::cout
-        << '\r'
-        << GetResourceInfo(Resource::Iron).name << ": "
-        << SiloFor(Resource::Iron).GetStoredUnits()
-        << " "
-        << GetResourceInfo(Resource::Coal).name << ": "
-        << SiloFor(Resource::Coal).GetStoredUnits()
-        << " "
-        << GetResourceInfo(Resource::Copper).name << ": "
-        << SiloFor(Resource::Copper).GetStoredUnits()
-        << " "
-        << GetResourceInfo(Resource::Steel).name << ": "
-        << SiloFor(Resource::Steel).GetStoredUnits()
-        << " "
-        << GetResourceInfo(Resource::Wire).name << ": "
-        << SiloFor(Resource::Wire).GetStoredUnits()
-        << std::flush;
+    std::cout << '\r';
+
+    std::vector<std::string> keys;
+    for (const auto& [id, silo_ptr] : silos_)
+    {
+        keys.push_back(id);
+    }
+    std::sort(keys.begin(), keys.end());
+
+    for (const auto& id : keys)
+    {
+        const std::string& nice_name = resource_registry_.at(id).name;
+        std::cout << nice_name << ": " << silos_.at(id)->GetStoredUnits() << " | ";
+    }
+    
+    std::cout << "          " << std::flush; 
 }
 
-Silo& RobotBuilderEngine::SiloFor(Resource resource)
+Silo& RobotBuilderEngine::SiloFor(const std::string& resource_id)
 {
-    return silos_[ToIndex(resource)];
+    return *silos_.at(resource_id);
 }
 
-const Silo& RobotBuilderEngine::SiloFor(Resource resource) const
+const Silo& RobotBuilderEngine::SiloFor(const std::string& resource_id) const
 {
-    return silos_[ToIndex(resource)];
+    return *silos_.at(resource_id);
 }
