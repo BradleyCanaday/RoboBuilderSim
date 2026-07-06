@@ -1,26 +1,19 @@
 #pragma once
 
-#include <ingredients/silo.hpp>
-
 #include <atomic>
 #include <barrier>
-#include <thread>
 
-class ResourceCollector
+#include <engine/simulation_worker.hpp>
+#include <ingredients/silo.hpp>
+
+class ResourceCollector: public SimulationWorker
 {
     private:
         Silo& output_silo_;
         int production_rate_;
 
-        std::barrier<>& sim_barrier_;
-        std::thread collector_thread_;
-
-        std::atomic<bool>& is_running_;
+        void StepPhase1() override;
 
     public:
-        ResourceCollector(Silo& output_silo, std::barrier<>& sim_barrier, int production_rate, std::atomic<bool>& is_running);
-
-        void Start();
-        void Run();
-        void Join();        
+        ResourceCollector(Silo& output_silo, std::barrier<>& sim_barrier, int production_rate, std::atomic<bool>& is_running);       
 };
