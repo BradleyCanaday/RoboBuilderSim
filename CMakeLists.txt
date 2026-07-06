@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 project(RoboBuilderSim)
 
-add_executable(robot_builder_simulator src/main.cpp src/engine/engine.cpp src/factories/factory.cpp src/resource_collectors/resource_collector.cpp src/ingredients/silo.cpp)
+add_executable(robot_builder_simulator src/main.cpp src/engine/engine.cpp src/engine/simulation_worker.cpp src/factories/factory.cpp src/resource_collectors/resource_collector.cpp src/ingredients/silo.cpp)
 
 target_include_directories(robot_builder_simulator PRIVATE
     ${CMAKE_SOURCE_DIR}/include
