@@ -17,6 +17,7 @@ void Silo::TakeResources(int resource_units)
 }
 int Silo::GetStoredUnits()
 {
+    std::lock_guard<std::mutex> lock(silo_mutex_);
     return stored_units_;
 }
 
